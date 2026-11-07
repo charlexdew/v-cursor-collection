@@ -3,7 +3,17 @@ let data,color='Violet',finish='Glass',state='default',playing=false,timer=null,
 const $=id=>document.getElementById(id);
 const theme=()=>`${color}V${finish}`;
 function source(s,f){return `assets/${theme()}/${s}/${f.filename}`;}
-function showFrame(f){const url=source(state,f);$('large').src=url;$('actual').src=url;}
+let previewBounds;
+// One alpha-union envelope per state, shared across frames and themes.
+// Translate display images only; never modify source artwork or cursor hotspots.
+function centerPreview(image,s){
+ const [left,top,right,bottom]=previewBounds.states[s];
+ image.style.transform=`translate(${-100*(left+right)/128}%, ${-100*(top+bottom)/128}%)`;
+}
+function showFrame(f){
+ const url=source(state,f);
+ for(const id of ['large','actual']){centerPreview($(id),state);$(id).src=url;}
+}
 function playback(){
  const frames=data.themes[theme()][state];
  showFrame(frames[frameIndex]);
@@ -42,7 +52,9 @@ function render(){
   b.setAttribute('aria-pressed',String(s===state));
   const image=document.createElement('img');
   image.src=source(s,data.themes[theme()][s].at(-1));image.alt='';
-  b.append(image,document.createTextNode(t().states[s]));
+  centerPreview(image,s);
+  const viewport=document.createElement('div');viewport.className='preview';viewport.append(image);
+  b.append(viewport,document.createTextNode(t().states[s]));
   b.onclick=()=>{state=s;render();};
   $('states').append(b);
  }
@@ -75,8 +87,10 @@ $('language').onchange=()=>{
  applyLanguage();
  if(data)render();
 };
-fetch('data.json').then(r=>{if(!r.ok)throw Error(t().loadError);return r.json();}).then(d=>{
- data=d;
+Promise.all(['data.json','preview-bounds.json'].map(url=>fetch(url).then(r=>{
+ if(!r.ok)throw Error(t().loadError);return r.json();
+}))).then(([d,bounds])=>{
+ data=d;previewBounds=bounds;
  for(const c of d.colors){
   const b=document.createElement('button');b.type='button';b.className='color';
   b.dataset.color=c.id;b.style.setProperty('--swatch',c.hex);

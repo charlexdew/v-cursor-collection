@@ -4,6 +4,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 
 root = Path(__file__).resolve().parent
@@ -27,5 +28,6 @@ for name in ['app.js', 'i18n.js']:
     assert (root / name).is_file()
     if shutil.which('node'):
         subprocess.run(['node', '--check', str(root / name)], check=True)
+subprocess.run([sys.executable, '-m', 'unittest', 'test_preview', '-v'], cwd=root, check=True)
 assert (root / '.nojekyll').exists()
 print(json.dumps({'themes':24,'checksums_verified':len(checksums),'svg_frames_parsed':frames,'status':'PASS'}, indent=2))

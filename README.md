@@ -20,6 +20,32 @@ python3 verify_site.py
 
 Plain HTML/CSS/JavaScript. No framework, build step, external fonts, analytics or paid services. GitHub Pages deploys from the root of `main`.
 
+## Preview positioning
+
+Large (144 px), actual-size (48 px), and state thumbnails (40 px) translate the
+visible artwork into the center of fixed-size display slots. The original SVG
+canvas size, tilt, paths, downloads, and pointer hotspots are unchanged. The
+hover cursor still uses its original tip hotspot, not the preview translation.
+
+`preview-bounds.json` contains one rendered-alpha envelope per state, unioned
+across every animation frame and all 24 themes. Translation stays fixed during
+animation and color/finish switching; the full envelope fits without clipping.
+Bounds include all nonzero alpha at 4× raster resolution, including strokes and
+antialiasing. Intentionally invisible edge-on flip frames add no bounds.
+
+After changing SVG artwork or frame metadata, regenerate and verify:
+
+```sh
+# Generation/re-render check require Pillow and librsvg's rsvg-convert.
+python3 build_preview_bounds.py
+python3 build_preview_bounds.py --check
+# Ordinary site verification requires Python + Node.js, not raster libraries.
+python3 verify_site.py
+```
+
+Verification includes source-digest freshness, state coverage, all three display
+scales, full-envelope containment, and frame-invariant translation tests.
+
 ## Install a cursor theme
 
 Choose a variant on the website, download its `.tar.gz`, then use KDE System Settings → Colors & Themes → Cursors → Install from File. Select the installed theme and apply it. Each archive has exactly one root theme directory. Nothing is installed by visiting the website.
